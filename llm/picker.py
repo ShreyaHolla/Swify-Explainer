@@ -77,7 +77,46 @@ def _usable(p):
     return bool(p["key"]) or local
 
 
-def ask_llm(prompt, role="gen"):
+def _claude(p, model, prompt, max_tokens, on_progress):
+    """Claude Messages API, streamed so the caller can show progress. -> (text, None) or (None, (kind, detail, wait))"""
+    try:
+        r = requests.post(f"{p['base']}/messages", stream=True, timeout=(15, 120),
+                          headers={"x-api-key": p["key"], "anthropic-version": "2023-06-01"},
+                          json={"model": model, "max_tokens": max_tokens, "stream": True,
+                                "messages": [{"role": "user", "content": prompt}]})
+    except requests.RequestException as e:
+        return None, ("retry", f"{type(e).__name__}", 20)
+    if r.status_code == 429 or r.status_code >= 500:   # 529 = overloaded
+        return None, ("retry", f"HTTP {r.status_code}: {r.text[:200]}", float(r.headers.get("retry-after", 20)))
+    if r.status_code in (401, 402, 403):
+        return None, ("hard", f"HTTP {r.status_code}: {r.text[:200]}", 0)
+    if not r.ok:
+        raise RuntimeError(f"Claude HTTP {r.status_code}: {r.text[:400]}")
+    parts, shown = [], 0
+    try:
+        for line in r.iter_lines(decode_unicode=True):
+            if not line or not line.startswith("data:"):
+                continue
+            ev = json.loads(line[5:])
+            t = ev.get("type")
+            if t == "content_block_delta" and ev.get("delta", {}).get("type") == "text_delta":
+                parts.append(ev["delta"]["text"])
+                n = sum(len(x) for x in parts)
+                if on_progress and n - shown >= 300:
+                    shown = n
+                    on_progress(f"Claude has written {n:,} characters…")
+            elif t == "error":
+                err = ev.get("error", {})
+                return None, ("retry", f"{err.get('type')}: {err.get('message', '')}", 20)
+            elif t == "message_delta" and ev.get("delta", {}).get("stop_reason") == "max_tokens":
+                raise RuntimeError("Claude ran out of room before finishing (max_tokens). Try fewer chapters.")
+    except requests.RequestException as e:
+        return None, ("retry", f"connection dropped ({type(e).__name__})", 10)
+    text = "".join(parts)
+    return (text, None) if text.strip() else (None, ("retry", "empty reply", 5))
+
+
+def ask_llm(prompt, role="gen", on_progress=None):
     """Call an OpenAI-compatible /chat/completions endpoint, falling through the configured providers.
 
     role: "gen" uses each provider's generator model, "judge" its (different) judge model.
@@ -103,36 +142,26 @@ def ask_llm(prompt, role="gen"):
         ready = [p for p in providers if _cooldown.get(p["name"], 0) <= now]
         if not ready:
             wait = min(_cooldown[p["name"]] for p in providers) - now
+            if on_progress:
+                on_progress(f"Waiting {int(max(1, wait))} s for the AI service (rate limit)…")
             time.sleep(max(1.0, min(60.0, wait + 1)))
             continue
         for p in ready:
             model = p["judge"] if role == "judge" else p["gen"]
             if "anthropic.com" in p["base"]:   # Claude: native Messages API (its OpenAI layer rejects json_object/temperature)
-                try:
-                    r = requests.post(f"{p['base']}/messages", timeout=TIMEOUT * 2,
-                                      headers={"x-api-key": p["key"], "anthropic-version": "2023-06-01"},
-                                      json={"model": model, "max_tokens": max(out_budget, 4000),
-                                            "messages": [{"role": "user", "content": prompt}]})
-                except requests.RequestException as e:
-                    _cooldown[p["name"]] = time.time() + 30
-                    last = f"{p['name']}: {type(e).__name__}"
-                    continue
-                if r.status_code == 429 or r.status_code >= 500:   # 529 = overloaded
-                    _cooldown[p["name"]] = time.time() + float(r.headers.get("retry-after", 30))
-                    last = f"{p['name']} HTTP {r.status_code}: {r.text[:200]}"
-                    continue
-                if r.status_code in (401, 402, 403):
+                text, fail = _claude(p, model, prompt, max(out_budget, 8000), on_progress)
+                if text is not None:
+                    return text
+                kind, detail, wait = fail
+                last = f"{p['name']} {detail}"
+                if kind == "hard":
                     _cooldown[p["name"]] = time.time() + 900
                     _hard.add(p["name"])
-                    last = f"{p['name']} HTTP {r.status_code}: {r.text[:200]}"
-                    continue
-                if not r.ok:
-                    raise RuntimeError(f"LLM {p['name']} HTTP {r.status_code}: {r.text[:400]}")
-                text = "".join(b.get("text", "") for b in r.json().get("content", []) if b.get("type") == "text")
-                if not text.strip():
-                    last = f"{p['name']}: empty reply"
-                    continue
-                return text
+                else:
+                    _cooldown[p["name"]] = time.time() + wait
+                    if on_progress:
+                        on_progress(f"Claude is busy ({detail[:60]}); trying again in {int(wait)} s…")
+                continue
             body = {"model": model, "messages": [{"role": "user", "content": prompt}],
                     "response_format": {"type": "json_object"}, "temperature": 0.7 if role == "gen" else 0.2,
                     "max_completion_tokens": out_budget}  # reasoning models spend part of this on hidden thinking

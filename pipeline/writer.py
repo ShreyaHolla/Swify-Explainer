@@ -75,11 +75,18 @@ RULES = """Rules:
 Return ONLY the JSON object."""
 
 
+PROGRESS = None  # the app sets this to a function(str) to show live progress
+
+
 def _llm(prompt, role="gen"):
     if os.environ.get("SWIFY_MOCK_LLM"):
+        if PROGRESS:
+            PROGRESS("Demo mode: using canned answers…")
+            import time as _t
+            _t.sleep(float(os.environ.get("SWIFY_MOCK_DELAY", "0")))
         return _mock(prompt, role)
     from picker import ask_llm
-    return ask_llm(prompt, role=role)
+    return ask_llm(prompt, role=role, on_progress=PROGRESS)
 
 
 def _json(text):

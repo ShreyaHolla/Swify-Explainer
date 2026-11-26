@@ -121,6 +121,8 @@ def llm_ready():
 
 
 HAVE_SWIFTC = shutil.which("swiftc") is not None
+writer.PROGRESS = None  # progress lines from a previous page load must not be reused
+TOP = st  # replaced per page by a container right under the heading (progress panels go there)
 
 
 # ------------------------------------------------------------------ checks (run after writing and after every save)
@@ -147,6 +149,8 @@ def run_checks(d, judge=True):
                 results[key] = r
     d["code_results"] = results
     if judge:
+        if writer.PROGRESS:
+            writer.PROGRESS("Fact-checking the script against the Swift book…")
         with st.spinner("Fact-checking the script against the Swift book…"):
             d["judge"] = writer.judge_script(sc, d["source"]["text"], d["source"]["chapter"])
 
@@ -213,8 +217,30 @@ st.markdown('<div class="steps">' + "".join(
 
 
 # ------------------------------------------------------------------ step 1: topic
+def friendly(e):
+    m = str(e)
+    if "authentication_error" in m or "invalid x-api-key" in m or "HTTP 401" in m:
+        return "The AI service rejected your API key. Check LLM_API_KEY in llm/.env (copy the key again from the Console's API keys page), then restart the app."
+    if "credit" in m.lower() or "HTTP 402" in m or "billing" in m.lower():
+        return "Your AI account has no credits left. Add credits in the Console (Billing), then try again."
+    if "not_found_error" in m and "model" in m:
+        return f"The model name in llm/.env was not found. Use LLM_MODEL=claude-sonnet-5-5. ({m[:200]})"
+    return m
+
+
+def progress_panel(label):
+    """A status box at the TOP of the page (under the heading) with a live progress line."""
+    box = TOP.container()
+    stat = box.status(label, expanded=True)
+    line = stat.empty()
+    writer.PROGRESS = lambda msg: line.markdown(f"⏳ {msg}")
+    return stat
+
+
 def step_topic():
+    global TOP
     st.header("What should Swify teach?")
+    TOP = st.container()
     topic = st.text_input("Topic", value=(d or {}).get("topic", ""), placeholder="e.g. Closures and capturing values")
     c1, c2, c3 = st.columns(3)
     level = c1.selectbox("Viewer level", LEVELS, index=LEVELS.index((d or {}).get("level", "Beginner")))
@@ -238,8 +264,9 @@ def step_topic():
         if not ready:
             st.error(f"The AI writer is not set up: {why}")
             return
+        st.toast("Writing your script: this takes about a minute.")
         try:
-            with st.status("Writing your script…", expanded=True) as s:
+            with progress_panel("Writing your script… (about a minute)") as s:
                 s.write(f"Reading the Swift book: **{book}**")
                 try:
                     text, url, used = sources.excerpt(book, topic)
@@ -257,14 +284,14 @@ def step_topic():
                       "chapters": int(chapters), "notes": notes, "own_source": own,
                       "source": {"chapter": book, "url": url, "sections": used, "text": text},
                       "script": script, "history": [], "stage": "review", "created": time.strftime("%Y-%m-%d %H:%M")}
-                s.write("Compiling the code samples and fact-checking…")
+                s.write("Compiling the code samples and fact-checking (a second model reads the script)…")
                 run_checks(nd)
                 save(nd)
                 s.update(label="Script ready for your review", state="complete")
             st.session_state.slug = nd["slug"]
             st.rerun()
         except Exception as e:
-            st.error(f"The AI step failed: {e}")
+            TOP.error(f"The AI step failed: {friendly(e)}")
 
 
 # ------------------------------------------------------------------ step 2: review
@@ -277,9 +304,11 @@ def parse_lines(s):
 
 
 def step_review():
+    global TOP
     sc = d["script"]
     c = counts(d)
     st.header(sc.get("title", d["topic"]))
+    TOP = st.container()
     src = d["source"]
     secs = " · " + ", ".join(src["sections"]) if src["sections"] else ""
     st.markdown(f'<div class="muted">Based on the Swift book: <a href="{src["url"]}">{src["chapter"]}</a>{secs} · about {spoken_seconds(sc) / 60:.1f} min</div>',
@@ -447,15 +476,16 @@ def step_review():
 
 def revise(instr):
     try:
-        with st.spinner("Revising the script…"):
+        with progress_panel("Revising the script… (about a minute)") as s:
             new = writer.revise_script(d["script"], d["source"]["text"], d["source"]["chapter"], instr, d["fmt"], d["chapters"])
-        d["history"].append({"at": time.strftime("%H:%M"), "script": d["script"]})
-        d["script"] = new
-        run_checks(d)
+            d["history"].append({"at": time.strftime("%H:%M"), "script": d["script"]})
+            d["script"] = new
+            s.write("Compiling the code samples and fact-checking…")
+            run_checks(d)
         save(d)
         st.rerun()
     except Exception as e:
-        st.error(f"Revision failed: {e}")
+        TOP.error(f"Revision failed: {friendly(e)}")
 
 
 def make_lesson():
