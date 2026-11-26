@@ -83,6 +83,8 @@ def llm_ready():
         return "mock"
     env = ROOT / "llm" / ".env"
     txt = env.read_text(encoding="utf-8") if env.exists() else ""
+    if re.search(r"^LLM_BASE_URL=\S*(localhost|127\.0\.0\.1)", txt, re.M) or "localhost" in os.environ.get("LLM_BASE_URL", ""):
+        return "ok"  # a model on this computer (e.g. Ollama) needs no key
     return "ok" if re.search(r"^LLM_API_KEY=(?!your-key-here)\S+", txt, re.M) or os.environ.get("LLM_API_KEY") else None
 
 
@@ -156,7 +158,7 @@ with st.sidebar:
     lr = llm_ready()
     st.markdown(f"AI writer: {'✅ connected' if lr == 'ok' else '🧪 demo answers' if lr == 'mock' else '⚠️ no key'}")
     if not lr:
-        st.caption("Copy llm/.env.example to llm/.env and add a free API key (e.g. Groq), then restart.")
+        st.caption("Copy llm/.env.example to llm/.env and add a free API key (e.g. Groq), or point it at a local Ollama model, then restart.")
     st.markdown(f"Swift compiler: {'✅ found' if HAVE_SWIFTC else '⚠️ not found'}")
     if not HAVE_SWIFTC:
         st.caption("Install Xcode command line tools (`xcode-select --install`) so code is compiled and run.")
