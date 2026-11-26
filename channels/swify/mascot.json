@@ -1,0 +1,20 @@
+{
+  "name": "Swify",
+  "source": "source/swify_original.png",
+  "preview_bg": "#FBF3E6",
+  "cut": { "saturation": 0.30, "pad": 40 },
+  "parts": {
+    "body": { "cx": 528, "cy": 300, "rx": 100, "ry": 170 },
+    "band_bottom": 445,
+    "ring_y": [270, 420],
+    "pivots": { "wing_l": [440, 330], "wing_r": [616, 330] }
+  },
+  "face": {
+    "eyes": [
+      { "cx": 483, "cy": 251, "rx": 21, "ry": 21 },
+      { "cx": 576, "cy": 251, "rx": 21, "ry": 21 }
+    ],
+    "lid_color": "#F1B45F",
+    "lash_color": "#3A2216"
+  }
+}

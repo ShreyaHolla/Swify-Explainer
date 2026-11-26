@@ -1,0 +1,35 @@
+{
+  "name": "Swify",
+  "topic": "Swift programming",
+  "grounding": ["https://docs.swift.org/swift-book/", "https://developer.apple.com/documentation/swift"],
+  "code": { "lang": "swift", "runner": "swiftc" },
+  "palette": {
+    "bg": "#FBF3E6",
+    "surface": "#F3E4CC",
+    "line": "#E6D3B3",
+    "accent": "#E07B39",
+    "accent_soft": "#F6D3B4",
+    "text": "#4A2A1A",
+    "muted": "#8C7462",
+    "teal": "#3F7F7A",
+    "good": "#6F9A5E",
+    "bad": "#B5533C",
+    "syntax": {
+      "keyword": "#2F6E69",
+      "type": "#A9531E",
+      "string": "#4F7A40",
+      "number": "#A3452F",
+      "comment": "#9A8572",
+      "plain": "#4A2A1A",
+      "call": "#6A3C8C"
+    }
+  },
+  "voices": {
+    "edge": { "voice": "en-US-AvaMultilingualNeural", "speed": 1.0 },
+    "kokoro": { "voice": "af_heart", "speed": 1.0 },
+    "mascot": {
+      "edge": { "voice": "en-US-AnaNeural", "speed": 1.05 },
+      "kokoro": { "voice": "af_sky", "speed": 1.0, "pitch_semitones": 3 }
+    }
+  }
+}

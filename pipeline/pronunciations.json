@@ -1,0 +1,25 @@
+{
+  "_help": "English spelling (lowercase) -> Devanagari. Used only with multilingual/Hindi voices. Captions keep the English spelling. Add names here; plural/possessive forms need their own entry (possessive 's is handled).",
+  "names": {
+    "ajmer": "अजमेर", "rajasthan": "राजस्थान", "cottonpet": "कॉटनपेट", "bengaluru": "बेंगलुरु", "crore": "करोड़", "nashik": "नाशिक", "lakh": "लाख", "telgi": "तेलगी", "abdul": "अब्दुल", "karim": "करीम", "khanapur": "खानापुर", "belagavi": "बेलगावी", "karnataka": "कर्नाटक",
+    "harshad": "हर्षद", "mehta": "मेहता", "dalal": "दलाल", "gujarat": "गुजरात", "jain": "जैन", "lala": "लाला",
+    "lajpatrai": "लाजपतराय", "prasann": "प्रसन्न", "pranjivandas": "प्राणजीवनदास", "worli": "वर्ली", "karad": "कराड", "thane": "ठाणे", "janakiraman": "जनकीरामन",
+  "sucheta": "सुचेता",
+    "amitabh": "अमिताभ", "bachchan": "बच्चन", "bombay": "बॉम्बे",
+    "lakshmibai": "लक्ष्मीबाई", "lakshmi": "लक्ष्मी", "jhansi": "झाँसी", "gwalior": "ग्वालियर", "kalpi": "कालपी",
+    "rani": "रानी", "raja": "राजा", "gangadhar": "गंगाधर", "rao": "राव", "damodar": "दामोदर",
+    "manikarnika": "मणिकर्णिका", "tambe": "तांबे", "sarangi": "सारंगी", "varanasi": "वाराणसी",
+    "mahabharata": "महाभारत", "ramayana": "रामायण", "duryodhana": "दुर्योधन", "arjuna": "अर्जुन", "krishna": "कृष्ण",
+    "dvaraka": "द्वारका", "dwarka": "द्वारका", "kurukshetra": "कुरुक्षेत्र", "hastinapura": "हस्तिनापुर",
+    "pandava": "पांडव", "pandavas": "पांडव", "kaurava": "कौरव", "kauravas": "कौरव", "bhishma": "भीष्म", "drona": "द्रोण",
+    "karna": "कर्ण", "draupadi": "द्रौपदी", "yudhishthira": "युधिष्ठिर", "bhima": "भीम", "abhimanyu": "अभिमन्यु",
+    "dhritarashtra": "धृतराष्ट्र", "gandhari": "गांधारी", "sanjaya": "संजय", "bhagavad": "भगवद्", "gita": "गीता",
+    "dharma": "धर्म", "akshauhini": "अक्षौहिणी", "akshauhinis": "अक्षौहिणी", "narayani": "नारायणी", "sena": "सेना",
+    "nanavati": "नानावटी", "ahuja": "आहूजा", "prem": "प्रेम", "kawas": "कावस", "manekshaw": "मानेकशॉ",
+    "ramalinga": "रामलिंग", "raju": "राजू", "satyam": "सत्यम", "hyderabad": "हैदराबाद", "mahindra": "महिंद्रा",
+    "maharashtra": "महाराष्ट्र", "mumbai": "मुंबई", "delhi": "दिल्ली", "vijaya": "विजया", "pandit": "पंडित",
+    "nehru": "नेहरू", "jawaharlal": "जवाहरलाल", "gandhi": "गांधी", "dalhousie": "डलहौजी",
+    "mughal": "मुगल", "ahom": "अहोम", "lachit": "लाचित", "borphukan": "बोरफुकन", "saraighat": "सराईघाट",
+    "plassey": "पलाशी", "parsi": "पारसी", "sindhi": "सिंधी", "shivaji": "शिवाजी", "akbar": "अकबर", "ashoka": "अशोक"
+  }
+}

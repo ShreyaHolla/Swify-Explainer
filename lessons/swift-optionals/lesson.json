@@ -1,0 +1,93 @@
+{
+  "title": "Optionals in Swift",
+  "channel": "swify",
+  "chapters": [
+    {
+      "title": "What is an optional?",
+      "standalone": true,
+      "scenes": [
+        {
+          "type": "title",
+          "title": "Optionals in Swift",
+          "hook": "Values that might be missing",
+          "say": "Today, let's learn optionals in Swift, and how to use them safely.",
+          "mascot": [
+            { "line": "Hello world!", "at": "start" },
+            { "beat": "wave", "cue": "Today" }
+          ]
+        },
+        {
+          "type": "concept",
+          "eyebrow": "The idea",
+          "text": "An optional is a box that may be empty",
+          "highlight": "empty",
+          "sub": "Swift calls an empty box nil",
+          "say": "An optional is like a box. It can hold a value, or it can be empty. Swift calls an empty box nil.",
+          "cues": { "highlight": "empty", "sub": "nil" },
+          "mascot": [{ "beat": "think", "cue": "box" }, { "beat": "nod", "cue": "nil" }]
+        },
+        {
+          "type": "code",
+          "eyebrow": "Declaring one",
+          "file": "code/optionals_1.swift",
+          "say": "Add a question mark to the type, and the variable is allowed to be nil. Double question mark gives a default value when the box is empty. Once we store Swify, the real value prints.",
+          "reveal": [
+            { "lines": [1], "cue": "question" },
+            { "lines": [2], "cue": "default" },
+            { "lines": [4, 5], "cue": "store" }
+          ],
+          "output": { "cue": "prints" },
+          "hold": 1.2,
+          "mascot": [{ "beat": "point", "cue": "question" }, { "beat": "celebrate", "cue": "prints" }]
+        }
+      ]
+    },
+    {
+      "title": "Unwrapping safely",
+      "standalone": true,
+      "scenes": [
+        {
+          "type": "code",
+          "eyebrow": "if let",
+          "file": "code/optionals_2.swift",
+          "say": "To use the value inside, unwrap it with if let. Converting text to an Int gives an optional, because the text might not be a number. Here it is, so the first branch runs.",
+          "reveal": [
+            { "lines": [3], "cue": "unwrap" },
+            { "lines": [1, 3], "cue": "Converting" },
+            { "lines": [5, 6, 7], "cue": "might" },
+            { "lines": [4], "cue": "first" }
+          ],
+          "output": { "cue": "runs" },
+          "hold": 1.2,
+          "mascot": [{ "beat": "point", "cue": "unwrap" }, { "beat": "hop", "cue": "runs" }]
+        },
+        {
+          "type": "compare",
+          "eyebrow": "Safe vs risky",
+          "left": { "title": "Safe", "tone": "good", "items": ["if let value = optional", "optional ?? fallback"] },
+          "right": { "title": "Risky", "tone": "bad", "items": ["optional!", "Crashes when nil"] },
+          "say": "Avoid the exclamation mark. Force unwrapping crashes your app when the value is nil. If let and a default value never crash.",
+          "cues": { "right": "Avoid", "left": "If" },
+          "mascot": [{ "beat": "think", "cue": "crashes" }, { "beat": "nod", "cue": "never" }]
+        },
+        {
+          "type": "list",
+          "eyebrow": "Recap",
+          "items": ["Optional means maybe empty", "Unwrap with if let", "Use ?? for a default"],
+          "say": "Quick recap. Optional means maybe empty. Unwrap with if let. And use double question mark for a default.",
+          "cues": ["Optional", "Unwrap", "use"],
+          "mascot": [{ "beat": "nod", "cue": "recap" }]
+        },
+        {
+          "type": "outro",
+          "title": "Next: optional chaining",
+          "say": "Next time, optional chaining. See you there!",
+          "mascot": [{ "line": "Your turn: try it!", "at": "start" }, { "beat": "wave", "cue": "See" }]
+        }
+      ]
+    }
+  ],
+  "shorts": [
+    { "chapter": 1, "mode": "cut", "hook": "Unwrap optionals safely" }
+  ]
+}

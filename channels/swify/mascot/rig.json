@@ -1,0 +1,51 @@
+{
+  "name": "Swify",
+  "width": 598,
+  "height": 506,
+  "mode": "parts",
+  "parts": [
+    {
+      "name": "wing_l",
+      "file": "wing_l.png",
+      "pivot": [
+        210,
+        238
+      ],
+      "z": 0
+    },
+    {
+      "name": "wing_r",
+      "file": "wing_r.png",
+      "pivot": [
+        386,
+        238
+      ],
+      "z": 0
+    },
+    {
+      "name": "body",
+      "file": "body.png",
+      "pivot": [
+        298,
+        353
+      ],
+      "z": 1
+    }
+  ],
+  "eyes": [
+    {
+      "cx": 253,
+      "cy": 159,
+      "rx": 21,
+      "ry": 21
+    },
+    {
+      "cx": 346,
+      "cy": 159,
+      "rx": 21,
+      "ry": 21
+    }
+  ],
+  "lid_color": "#F1B45F",
+  "lash_color": "#3A2216"
+}
