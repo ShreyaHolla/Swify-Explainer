@@ -87,7 +87,7 @@ export const Compare: React.FC<P> = ({ s, f, pal, L }) => {
         {d.items.map((it: string, i: number) => {
           const code = /[!?=]|if let/.test(it);
           return (
-            <div key={i} style={{ fontFamily: code ? MONO : SANS, fontWeight: code ? 500 : 600, fontSize: L.type.compare, color: pal.text }}>{it}</div>
+            <div key={i} style={{ fontVariantLigatures: "none", fontFamily: code ? MONO : SANS, fontWeight: code ? 500 : 600, fontSize: L.type.compare, color: pal.text }}>{it}</div>
           );
         })}
       </div>

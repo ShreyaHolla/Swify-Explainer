@@ -18,6 +18,27 @@ RUNNERS = {
 }
 
 
+def check_code(code: str, lang: str = "swift"):
+    """Compile and run one snippet. -> {"ok": True/False/None, "output", "error"}; ok None = no compiler here."""
+    r = RUNNERS[lang]
+    if shutil.which(r["bin"]) is None:
+        return {"ok": None, "output": "", "error": f"{r['bin']} is not installed: output not verified"}
+    with tempfile.TemporaryDirectory() as td:
+        src, exe = Path(td) / "main.swift", Path(td) / "a.out"
+        src.write_text(code, encoding="utf-8")
+        b = subprocess.run(r["build"](src, exe), capture_output=True, text=True)
+        if b.returncode:
+            err = "\n".join(l.replace(str(src), "main.swift") for l in b.stderr.splitlines() if "error" in l or "^" in l or l.strip())
+            return {"ok": False, "output": "", "error": err[:2000]}
+        try:
+            p = subprocess.run([str(exe)], capture_output=True, text=True, timeout=20)
+        except subprocess.TimeoutExpired:
+            return {"ok": False, "output": "", "error": "Program ran for more than 20 seconds (infinite loop?)"}
+        if p.returncode:
+            return {"ok": False, "output": p.stdout.rstrip(), "error": f"Crashed (exit {p.returncode}): {p.stderr[:800]}"}
+        return {"ok": True, "output": p.stdout.rstrip("\n"), "error": ""}
+
+
 def run(lesson_dir: Path, lang: str):
     lesson = json.loads((lesson_dir / "lesson.json").read_text(encoding="utf-8"))
     files = sorted({s["file"] for ch in lesson["chapters"] for s in ch["scenes"] if s["type"] == "code"})

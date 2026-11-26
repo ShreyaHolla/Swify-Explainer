@@ -111,6 +111,10 @@ def main(channel: Path):
     for i, t in enumerate(tiles):
         sheet.paste(t, (i * rig["width"], 0))
     sheet.save(out / "preview.jpg", quality=90)
+    rest = Image.new("RGBA", (rig["width"], rig["height"]), (0, 0, 0, 0))
+    for p in sorted(rig["parts"], key=lambda p: p["z"]):
+        rest.alpha_composite(Image.open(out / p["file"]))
+    rest.crop(rest.getbbox()).save(out / "avatar.png")
     print(f"{cfg['name']}: {rig['mode']} mode, {len(rig['parts'])} part(s), {rig['width']}x{rig['height']} -> {out}")
 
 

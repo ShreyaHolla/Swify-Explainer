@@ -22,6 +22,10 @@ def _cue_finder(words):
     pos = [0]
 
     def find(cue, scene_title):
+        if isinstance(cue, int):  # word position in the scene's narration (made by script_to_lesson.py)
+            if not words:
+                raise CueError(f"scene '{scene_title}' has no narration for cue {cue}")
+            return words[min(max(cue, 0), len(words) - 1)]["start"]
         c = norm(cue)
         for i in range(pos[0], len(words)):
             if norm(words[i]["text"]).startswith(c):
@@ -111,7 +115,7 @@ def build_props(lesson_dir: Path, channel_dir: Path, video: dict):
         find = _cue_finder(sw)
         for m in sc.get("mascot", []):
             if "beat" in m:
-                at = find(m["cue"], sc.get("title") or sc["type"]) if m.get("cue") else scene_seg[i]["start"] + 0.3
+                at = find(m["cue"], sc.get("title") or sc["type"]) if m.get("cue") is not None else scene_seg[i]["start"] + 0.3
                 beats.append({"name": m["beat"], "at": f(at)})
         for ls in [s for s in line_segs if s["scene"] == i]:
             mw = [w for w in words if w["scene"] == i and w["kind"] == "mascot"]

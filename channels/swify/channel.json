@@ -1,8 +1,15 @@
 {
+  "id": "swify",
   "name": "Swify",
   "topic": "Swift programming",
-  "grounding": ["https://docs.swift.org/swift-book/", "https://developer.apple.com/documentation/swift"],
-  "code": { "lang": "swift", "runner": "swiftc" },
+  "grounding": [
+    "https://docs.swift.org/swift-book/",
+    "https://developer.apple.com/documentation/swift"
+  ],
+  "code": {
+    "lang": "swift",
+    "runner": "swiftc"
+  },
   "palette": {
     "bg": "#FBF3E6",
     "surface": "#F3E4CC",
@@ -25,11 +32,28 @@
     }
   },
   "voices": {
-    "edge": { "voice": "en-US-AvaMultilingualNeural", "speed": 1.0 },
-    "kokoro": { "voice": "af_heart", "speed": 1.0 },
+    "edge": {
+      "voice": "en-US-AvaMultilingualNeural",
+      "speed": 1.0
+    },
+    "kokoro": {
+      "voice": "af_heart",
+      "speed": 1.0
+    },
     "mascot": {
-      "edge": { "voice": "en-US-AnaNeural", "speed": 1.05 },
-      "kokoro": { "voice": "af_sky", "speed": 1.0, "pitch_semitones": 3 }
+      "edge": {
+        "voice": "en-US-AnaNeural",
+        "speed": 1.05
+      },
+      "kokoro": {
+        "voice": "af_sky",
+        "speed": 1.0,
+        "pitch_semitones": 3
+      }
     }
+  },
+  "mascot_lines": {
+    "intro": "Hello world!",
+    "outro": "Your turn: try it!"
   }
 }

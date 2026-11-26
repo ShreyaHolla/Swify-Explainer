@@ -62,6 +62,8 @@ def main():
     ap.add_argument("--still", help="comma-separated frames: render PNG stills instead of videos (quick look)")
     ap.add_argument("--allow-unverified", action="store_true", help="render even if code could not be compiled here")
     ap.add_argument("--no-render", action="store_true")
+    ap.add_argument("--shorts", help="which Shorts to make, 1-based, e.g. 1,3 (default: all)")
+    ap.add_argument("--no-youtube", action="store_true", help="skip the long 16:9 video")
     ap.add_argument("--reuse-voice", action="store_true", help="keep build/voice.wav and words.json from the last run")
     ap.add_argument("--models", default=os.environ.get("KOKORO_DIR", str(ROOT / "models")))
     a = ap.parse_args()
@@ -93,10 +95,13 @@ def main():
     shutil.copy(build / "voice.wav", public / "voice.wav")
     shutil.copytree(cd / "mascot", public / "mascot", ignore=shutil.ignore_patterns("preview.jpg"))
     videos = []
-    if a.only != "shorts":
+    if a.only != "shorts" and lesson.get("landscape", True) and not a.no_youtube:
         videos.append(("youtube", {"format": "landscape"}))
     if a.only != "landscape":
+        pick = {int(x) for x in a.shorts.split(",") if x.strip()} if a.shorts else None
         for k, sh in enumerate(lesson.get("shorts", []), 1):
+            if pick is not None and k not in pick:
+                continue
             if sh.get("mode", "cut") != "cut":
                 print(f"  short {k}: rewrite mode is not built yet, skipped")
                 continue
@@ -106,8 +111,9 @@ def main():
         pf = build / f"props_{name}.json"
         pf.write_text(json.dumps(props), encoding="utf-8")
         print(f"  {name}: {props['width']}x{props['height']}, {props['durationInFrames'] / props['fps']:.1f}s, {len(props['scenes'])} scenes")
-        if name == "youtube":
-            (STUDIO / "src" / "sample.json").write_text(json.dumps(props), encoding="utf-8")
+        if name == "youtube" or (name.startswith("short") and not any(n == "youtube" for n, _ in videos) and name == videos[0][0]):
+            if name == "youtube":
+                (STUDIO / "src" / "sample.json").write_text(json.dumps(props), encoding="utf-8")
             words = json.loads((build / "words.json").read_text(encoding="utf-8"))
             srt, n, cur = [], 0, []
             for w in [w for w in words if w["kind"] == "narration"]:
@@ -116,7 +122,7 @@ def main():
                     n += 1
                     srt.append(f"{n}\n{ts(cur[0]['start'], True)} --> {ts(cur[-1]['end'] + 0.2, True)}\n{' '.join(x['text'] for x in cur)}\n")
                     cur = []
-            (out / f"{slug}_youtube.srt").write_text("\n".join(srt), encoding="utf-8")
+            (out / f"{slug}_{name}.srt").write_text("\n".join(srt), encoding="utf-8")
             chap = "\n".join(f"{ts(c['from'] / props['fps'])} {c['title']}" for c in props["chapters"])
             (out / f"{slug}_metadata.txt").write_text(
                 f"Title: {lesson['title']}\n\nChapters:\n{chap}\n\nCode verified: {'yes' if not unverified else 'NO: ' + ', '.join(unverified)}\n",

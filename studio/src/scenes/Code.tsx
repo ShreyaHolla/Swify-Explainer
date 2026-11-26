@@ -31,13 +31,29 @@ export const highlight = (line: string): Tok[] => {
 /** Code card: lines type in on their cue word, the newest step is highlighted and earlier lines dim; on the
  *  output cue everything brightens and the real program output slides up underneath. */
 export const Code: React.FC<{ s: Scene; f: number; pal: Palette; L: Layout }> = ({ s, f, pal, L }) => {
-  const fs = L.type.code;
   const lines: string[] = s.lines;
+  // auto-fit: shrink the code (never below 24 px) so the card AND its output always fit in the content box
+  const outLines = s.cues.output != null ? String(s.output || "").split("\n").length : 0;
+  const fixed = 70 + 30 + 40 + (outLines ? 30 : 0);                  // eyebrow, gaps, card header padding
+  const perFs = 0.62 + 1.4 + lines.length * 1.6 + (outLines ? 0.62 + 0.3 + outLines * 1.45 : 0);
+  const fs = Math.max(24, Math.min(L.type.code, Math.floor((L.content.h - fixed) / perFs)));
   const steps: { lines: number[]; at: number }[] = s.steps;
   const outAt: number | undefined = s.cues.output;
   const showOut = outAt != null && f >= outAt;
   const firstAt: Record<number, number> = {};
   steps.forEach((st) => st.lines.forEach((n) => { if (firstAt[n] == null || st.at < firstAt[n]) firstAt[n] = st.at; }));
+  // lines no step names (closing braces, blank-ish lines) appear with the nearest named line above them
+  // (or below, for lines before the first named one), so the program on screen is always complete
+  for (let n = 1; n <= lines.length; n++) {
+    if (firstAt[n] != null) continue;
+    let k = n - 1;
+    while (k >= 1 && firstAt[k] == null) k--;
+    if (k >= 1) { firstAt[n] = firstAt[k]; continue; }
+    k = n + 1;
+    while (k <= lines.length && firstAt[k] == null) k++;
+    if (k <= lines.length) firstAt[n] = firstAt[k];
+    else if (outAt != null) firstAt[n] = outAt;
+  }
   const current = [...steps].reverse().find((st) => f >= st.at);
   const filename = (s.file || "main.swift").split("/").pop();
 
@@ -49,7 +65,7 @@ export const Code: React.FC<{ s: Scene; f: number; pal: Palette; L: Layout }> = 
           {[pal.bad, pal.accent, pal.good].map((c, i) => <div key={i} style={{ width: 16, height: 16, borderRadius: 8, background: c, opacity: 0.7 }} />)}
           <div style={{ marginLeft: 12, fontFamily: MONO, fontSize: fs * 0.62, color: pal.muted }}>{filename}</div>
         </div>
-        <div style={{ padding: `${fs * 0.7}px 0`, fontFamily: MONO, fontWeight: 500, fontSize: fs, lineHeight: 1.6, whiteSpace: "pre" }}>
+        <div style={{ padding: `${fs * 0.7}px 0`, fontFamily: MONO, fontWeight: 500, fontSize: fs, lineHeight: 1.6, whiteSpace: "pre", fontVariantLigatures: "none", fontFeatureSettings: '"calt" 0, "liga" 0' }}>
           {lines.map((line, i) => {
             const n = i + 1;
             const at = firstAt[n];
@@ -78,7 +94,7 @@ export const Code: React.FC<{ s: Scene; f: number; pal: Palette; L: Layout }> = 
             <div style={{ fontFamily: SANS, fontWeight: 600, fontSize: fs * 0.62, letterSpacing: 3, textTransform: "uppercase", color: pal.muted }}>
               Output
             </div>
-            <div style={{ fontFamily: MONO, fontWeight: 500, fontSize: fs, lineHeight: 1.45, color: pal.text, whiteSpace: "pre" }}>{s.output}</div>
+            <div style={{ fontFamily: MONO, fontWeight: 500, fontSize: fs, lineHeight: 1.45, color: pal.text, whiteSpace: "pre", fontVariantLigatures: "none", fontFeatureSettings: '"calt" 0, "liga" 0' }}>{s.output}</div>
           </div>
         </div>
       )}

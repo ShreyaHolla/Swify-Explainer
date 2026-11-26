@@ -1,0 +1,9 @@
+# Python packages for Swify Studio (Python 3.10+)
+streamlit>=1.46
+requests
+edge-tts
+numpy
+scipy
+pillow
+soundfile
+# optional offline voice:  kokoro-onnx
