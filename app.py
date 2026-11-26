@@ -78,14 +78,38 @@ def drafts():
     return out
 
 
-def llm_ready():
-    if os.environ.get("SWIFY_MOCK_LLM"):
-        return "mock"
+def read_env():
+    """llm/.env as a dict, forgiving about spaces, quotes and 'export ' prefixes."""
     env = ROOT / "llm" / ".env"
-    txt = env.read_text(encoding="utf-8") if env.exists() else ""
-    if re.search(r"^LLM_BASE_URL=\S*(localhost|127\.0\.0\.1)", txt, re.M) or "localhost" in os.environ.get("LLM_BASE_URL", ""):
-        return "ok"  # a model on this computer (e.g. Ollama) needs no key
-    return "ok" if re.search(r"^LLM_API_KEY=(?!your-key-here)\S+", txt, re.M) or os.environ.get("LLM_API_KEY") else None
+    out = {}
+    if env.exists():
+        for line in env.read_text(encoding="utf-8-sig").splitlines():
+            line = line.strip()
+            if line.startswith("export "):
+                line = line[7:].strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            k, v = line.split("=", 1)
+            out[k.strip()] = v.strip().strip('"').strip("'")
+    return out
+
+
+def llm_ready():
+    """-> (status, reason): status "mock" | "ok" | None"""
+    if os.environ.get("SWIFY_MOCK_LLM"):
+        return "mock", ""
+    envf = ROOT / "llm" / ".env"
+    e = {**read_env(), **{k: v for k, v in os.environ.items() if k.startswith("LLM")}}
+    base, key = e.get("LLM_BASE_URL", ""), e.get("LLM_API_KEY", "")
+    if "localhost" in base or "127.0.0.1" in base:
+        return "ok", ""  # a model on this computer (e.g. Ollama) needs no key
+    if not envf.exists() and not key:
+        return None, f"No settings file found at {envf}. Copy llm/.env.example to llm/.env and add your key."
+    if not key or key == "your-key-here":
+        return None, "llm/.env has no LLM_API_KEY yet (or still says your-key-here)."
+    if key.startswith("sk-ant-") and "anthropic.com" not in base:
+        return None, "That is a Claude key: also set LLM_BASE_URL=https://api.anthropic.com/v1 and LLM_MODEL=claude-sonnet-5-5 in llm/.env."
+    return "ok", ""
 
 
 HAVE_SWIFTC = shutil.which("swiftc") is not None
@@ -155,10 +179,11 @@ with st.sidebar:
             st.session_state.slug = dd["slug"]
             st.rerun()
     st.divider()
-    lr = llm_ready()
-    st.markdown(f"AI writer: {'✅ connected' if lr == 'ok' else '🧪 demo answers' if lr == 'mock' else '⚠️ no key'}")
+    lr, why = llm_ready()
+    model = read_env().get("LLM_MODEL", "")
+    st.markdown(f"AI writer: {'✅ ' + (model or 'connected') if lr == 'ok' else '🧪 demo answers' if lr == 'mock' else '⚠️ not set up'}")
     if not lr:
-        st.caption("Copy llm/.env.example to llm/.env and add a free API key (e.g. Groq), or point it at a local Ollama model, then restart.")
+        st.caption(why + " Then click ↻ (or press R) to reload.")
     st.markdown(f"Swift compiler: {'✅ found' if HAVE_SWIFTC else '⚠️ not found'}")
     if not HAVE_SWIFTC:
         st.caption("Install Xcode command line tools (`xcode-select --install`) so code is compiled and run.")
@@ -197,8 +222,14 @@ def step_topic():
                          placeholder="e.g. Use a shopping-cart example. Skip escaping closures.")
     own = st.text_area("Extra source text (optional)", value=(d or {}).get("own_source", ""), height=90,
                        placeholder="Paste anything else the lesson must be based on (docs, your notes).")
-    disabled = not topic.strip() or not llm_ready()
-    if st.button("✍️  Write the script", type="primary", disabled=disabled):
+    if st.button("✍️  Write the script", type="primary"):
+        ready, why = llm_ready()
+        if not topic.strip():
+            st.warning("Type a topic first (press Enter after typing).")
+            return
+        if not ready:
+            st.error(f"The AI writer is not set up: {why}")
+            return
         try:
             with st.status("Writing your script…", expanded=True) as s:
                 s.write(f"Reading the Swift book: **{book}**")
