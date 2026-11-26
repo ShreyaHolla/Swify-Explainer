@@ -6,6 +6,8 @@
   options: --only landscape|shorts   --still 120,600   --allow-unverified   --no-render
 
 Steps: code check -> narration + word timings -> timeline (props per video) -> Remotion render -> loudness + exports.
+Live preview of a built video (no render):
+  cd studio && npx remotion studio src/index.ts --props=../lessons/<slug>/build/props_youtube.json --public-dir=../lessons/<slug>/build/public
 Outputs in <lesson>/out/: <slug>_youtube.mp4, <slug>_short1.mp4 ..., <slug>_youtube.srt, <slug>_metadata.txt
 """
 import argparse
@@ -112,8 +114,6 @@ def main():
         pf.write_text(json.dumps(props), encoding="utf-8")
         print(f"  {name}: {props['width']}x{props['height']}, {props['durationInFrames'] / props['fps']:.1f}s, {len(props['scenes'])} scenes")
         if name == "youtube" or (name.startswith("short") and not any(n == "youtube" for n, _ in videos) and name == videos[0][0]):
-            if name == "youtube":
-                (STUDIO / "src" / "sample.json").write_text(json.dumps(props), encoding="utf-8")
             words = json.loads((build / "words.json").read_text(encoding="utf-8"))
             srt, n, cur = [], 0, []
             for w in [w for w in words if w["kind"] == "narration"]:

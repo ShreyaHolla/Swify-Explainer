@@ -47,7 +47,7 @@ cd studio && npm install && cd ..
 python pipeline/import_mascot.py channels/swify        # once per mascot: cut-out, parts, preview.jpg
 python make.py lessons/swift-optionals --voice edge     # or --voice kokoro (offline)
 python make.py lessons/swift-optionals --still 60,400   # quick PNG check of chosen frames
-cd studio && npx remotion studio src/index.ts --public-dir=../lessons/swift-optionals/build/public   # live preview
+cd studio && npx remotion studio src/index.ts --props=../lessons/swift-optionals/build/props_youtube.json --public-dir=../lessons/swift-optionals/build/public   # live preview
 ```
 Outputs land in `lessons/<slug>/out/`: `_youtube.mp4`, `_short1.mp4`, `_youtube.srt`, `_metadata.txt` (chapters).
 
