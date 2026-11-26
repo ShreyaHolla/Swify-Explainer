@@ -107,6 +107,32 @@ def ask_llm(prompt, role="gen"):
             continue
         for p in ready:
             model = p["judge"] if role == "judge" else p["gen"]
+            if "anthropic.com" in p["base"]:   # Claude: native Messages API (its OpenAI layer rejects json_object/temperature)
+                try:
+                    r = requests.post(f"{p['base']}/messages", timeout=TIMEOUT * 2,
+                                      headers={"x-api-key": p["key"], "anthropic-version": "2023-06-01"},
+                                      json={"model": model, "max_tokens": max(out_budget, 4000),
+                                            "messages": [{"role": "user", "content": prompt}]})
+                except requests.RequestException as e:
+                    _cooldown[p["name"]] = time.time() + 30
+                    last = f"{p['name']}: {type(e).__name__}"
+                    continue
+                if r.status_code == 429 or r.status_code >= 500:   # 529 = overloaded
+                    _cooldown[p["name"]] = time.time() + float(r.headers.get("retry-after", 30))
+                    last = f"{p['name']} HTTP {r.status_code}: {r.text[:200]}"
+                    continue
+                if r.status_code in (401, 402, 403):
+                    _cooldown[p["name"]] = time.time() + 900
+                    _hard.add(p["name"])
+                    last = f"{p['name']} HTTP {r.status_code}: {r.text[:200]}"
+                    continue
+                if not r.ok:
+                    raise RuntimeError(f"LLM {p['name']} HTTP {r.status_code}: {r.text[:400]}")
+                text = "".join(b.get("text", "") for b in r.json().get("content", []) if b.get("type") == "text")
+                if not text.strip():
+                    last = f"{p['name']}: empty reply"
+                    continue
+                return text
             body = {"model": model, "messages": [{"role": "user", "content": prompt}],
                     "response_format": {"type": "json_object"}, "temperature": 0.7 if role == "gen" else 0.2,
                     "max_completion_tokens": out_budget}  # reasoning models spend part of this on hidden thinking
