@@ -90,7 +90,9 @@ def read_env():
             if not line or line.startswith("#") or "=" not in line:
                 continue
             k, v = line.split("=", 1)
-            out[k.strip()] = v.strip().strip('"').strip("'")
+            k, v = k.strip(), v.strip().strip('"').strip("'")
+            if v and v not in ("your-key-here", "sk-ant-...", "sk-ant-PASTE-YOUR-KEY-HERE"):
+                out[k] = v  # a leftover template line never overrides a real value
     return out
 
 
@@ -105,8 +107,14 @@ def llm_ready():
         return "ok", ""  # a model on this computer (e.g. Ollama) needs no key
     if not envf.exists() and not key:
         return None, f"No settings file found at {envf}. Copy llm/.env.example to llm/.env and add your key."
-    if not key or key == "your-key-here":
-        return None, "llm/.env has no LLM_API_KEY yet (or still says your-key-here)."
+    if not key:
+        ex = ROOT / "llm" / ".env.example"
+        if ex.exists() and re.search(r"^\s*LLM_API_KEY\s*=\s*['\"]?(sk-|gsk_)", ex.read_text(encoding="utf-8"), re.M):
+            return None, ("Your key is in llm/.env.example (the template, which is uploaded to GitHub). Move it to llm/.env, "
+                          "then run: git checkout -- llm/.env.example")
+        other = [k for k in read_env() if "KEY" in k.upper() and k != "LLM_API_KEY"]
+        hint = f" Found {', '.join(other)} instead: rename it to LLM_API_KEY." if other else ""
+        return None, "llm/.env has no LLM_API_KEY line with a real key." + hint
     if key.startswith("sk-ant-") and "anthropic.com" not in base:
         return None, "That is a Claude key: also set LLM_BASE_URL=https://api.anthropic.com/v1 and LLM_MODEL=claude-sonnet-5-5 in llm/.env."
     return "ok", ""

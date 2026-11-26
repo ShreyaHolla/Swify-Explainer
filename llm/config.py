@@ -5,6 +5,10 @@ from pathlib import Path
 ROOT = Path(__file__).parent
 
 
+PLACEHOLDERS = {"your-key-here", "sk-ant-...", "sk-ant-PASTE-YOUR-KEY-HERE"}
+_from_shell = {k for k in os.environ if k.startswith("LLM")}  # values set in the shell itself always win
+
+
 def _load_env():
     p = ROOT / ".env"
     if not p.exists():
@@ -16,7 +20,11 @@ def _load_env():
         if not line or line.startswith("#") or "=" not in line:
             continue
         k, v = line.split("=", 1)
-        os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
+        k, v = k.strip(), v.strip().strip('"').strip("'")
+        if not v or v in PLACEHOLDERS:
+            continue  # a leftover template line never overrides a real value
+        if k not in _from_shell:
+            os.environ[k] = v  # later lines win, like in most .env readers
 
 
 _load_env()
@@ -24,9 +32,10 @@ _load_env()
 # Any OpenAI-compatible chat endpoint: Groq, OpenRouter, Cerebras, local Ollama...
 LLM_BASE_URL = os.getenv("LLM_BASE_URL", "https://api.groq.com/openai/v1").rstrip("/")
 LLM_API_KEY = os.getenv("LLM_API_KEY", "")
-LLM_MODEL = os.getenv("LLM_MODEL", "openai/gpt-oss-120b")
+_CLAUDE = "anthropic.com" in LLM_BASE_URL
+LLM_MODEL = os.getenv("LLM_MODEL", "claude-sonnet-5-5" if _CLAUDE else "openai/gpt-oss-120b")
 TPM_LIMIT = int(os.getenv("LLM_TPM_LIMIT", "8000"))   # provider tokens-per-minute limit (Groq free tier: 8000)
-LLM_JUDGE_MODEL =os.getenv("LLM_JUDGE_MODEL", "qwen/qwen3.8-27b")  # adversarial fact-checker: a different model family
+LLM_JUDGE_MODEL = os.getenv("LLM_JUDGE_MODEL", "claude-opus-5-5" if _CLAUDE else "qwen/qwen3.8-27b")  # adversarial fact-checker: a different model family
 
 
 def _extra(n):
